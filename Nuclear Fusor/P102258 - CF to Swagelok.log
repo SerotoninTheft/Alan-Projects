@@ -1,0 +1,79 @@
+INFO: Header : Author::Rick
+INFO: Header : Authorization::Unknown
+INFO: Header : Description::STEP AP203
+INFO: Header : File Name::P102258.step
+INFO: Header : Implementation Level::1
+INFO: Header : Organization::Microsoft
+INFO: Header : Originating System::SolidWorks 2014
+INFO: Header : Preprocessor Version::SwSTEP 2.0
+INFO: Header : Schema::CONFIG_CONTROL_DESIGN
+INFO: Header : Time Stamp::2014-09-25T01:20:19
+INFO: Begin CAD File Read 'C:/Users/alenz/OneDrive/Documents/GitHub/Alan-Projects/Nuclear Fusor/P102258 - CF to Swagelok.step'
+
+INFO:       Summary of STEP Entities
+INFO: 
+INFO: Entity Type                                                   Count
+INFO: -----------                                                   ------
+INFO: advanced_brep_shape_representation .......................:   1
+INFO: advanced_face ............................................:   98
+INFO: application_context ......................................:   2
+INFO: application_protocol_definition ..........................:   2
+INFO: applied_approval_assignment ..............................:   3
+INFO: applied_date_and_time_assignment .........................:   2
+INFO: applied_person_and_organization_assignment ...............:   5
+INFO: applied_security_classification_assignment ...............:   1
+INFO: approval .................................................:   3
+INFO: approval_date_time .......................................:   3
+INFO: approval_person_organization .............................:   3
+INFO: approval_role ............................................:   3
+INFO: approval_status ..........................................:   3
+INFO: axis2_placement_3d .......................................:   213
+INFO: b_spline_curve_with_knots ................................:   48
+INFO: b_spline_surface_with_knots_and_rational_b_spline_surface :   2
+INFO: calendar_date ............................................:   5
+INFO: cartesian_point ..........................................:   889
+INFO: circle ...................................................:   116
+INFO: closed_shell .............................................:   1
+INFO: conical_surface ..........................................:   2
+INFO: conversion_based_unit_and_length_unit ....................:   1
+INFO: coordinated_universal_time_offset ........................:   5
+INFO: cylindrical_surface ......................................:   42
+INFO: date_and_time ............................................:   5
+INFO: date_time_role ...........................................:   2
+INFO: dimensional_exponents ....................................:   1
+INFO: direction ................................................:   484
+INFO: edge_curve ...............................................:   222
+INFO: edge_loop ................................................:   120
+INFO: face_bound ...............................................:   22
+INFO: face_outer_bound .........................................:   98
+INFO: geometric_representation_context_and_global_uncertainty_a :   1
+INFO: length_measure_with_unit .................................:   1
+INFO: length_unit_and_si_unit ..................................:   1
+INFO: line .....................................................:   58
+INFO: local_time ...............................................:   5
+INFO: manifold_solid_brep ......................................:   1
+INFO: organization .............................................:   1
+INFO: oriented_edge ............................................:   444
+INFO: person ...................................................:   1
+INFO: person_and_organization ..................................:   8
+INFO: person_and_organization_role .............................:   5
+INFO: plane ....................................................:   24
+INFO: plane_angle_unit_and_si_unit .............................:   1
+INFO: product ..................................................:   1
+INFO: product_context ..........................................:   1
+INFO: product_definition .......................................:   1
+INFO: product_definition_context ...............................:   1
+INFO: product_definition_formation_with_specified_source .......:   1
+INFO: product_definition_shape .................................:   1
+INFO: product_related_product_category .........................:   1
+INFO: security_classification ..................................:   1
+INFO: security_classification_level ............................:   1
+INFO: shape_definition_representation ..........................:   1
+INFO: si_unit_and_solid_angle_unit .............................:   1
+INFO: spherical_surface ........................................:   4
+INFO: toroidal_surface .........................................:   24
+INFO: uncertainty_measure_with_unit ............................:   1
+INFO: vector ...................................................:   58
+INFO: vertex_point .............................................:   134
+INFO:                                                              -------
+INFO: Total                                                         3190

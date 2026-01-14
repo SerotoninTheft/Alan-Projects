@@ -1,0 +1,95 @@
+INFO: Header : Author::Unknown
+INFO: Header : Authorization::Unknown
+INFO: Header : Description::STEP AP214
+INFO: Header : File Name::P101923.STEP
+INFO: Header : Implementation Level::1
+INFO: Header : Organization::Unknown
+INFO: Header : Originating System::SolidWorks 2021
+INFO: Header : Preprocessor Version::SwSTEP 2.0
+INFO: Header : Schema::AUTOMOTIVE_DESIGN
+INFO: Header : Time Stamp::2021-12-10T22:33:48
+INFO: Begin CAD File Read 'C:/Users/alenz/OneDrive/Documents/GitHub/Alan-Projects/Nuclear Fusor/P106083 - Mechanical Pump.step'
+
+INFO:       Summary of STEP Entities
+INFO: 
+INFO: Entity Type                                                   Count
+INFO: -----------                                                   ------
+INFO: advanced_face ............................................:   3783
+INFO: application_context ......................................:   2
+INFO: application_protocol_definition ..........................:   2
+INFO: axis2_placement_3d .......................................:   3645
+INFO: b_spline_curve_with_knots ................................:   5043
+INFO: b_spline_curve_with_knots_and_rational_b_spline_curve ....:   37
+INFO: b_spline_surface_with_knots ..............................:   657
+INFO: b_spline_surface_with_knots_and_rational_b_spline_surface :   84
+INFO: cartesian_point ..........................................:   124080
+INFO: circle ...................................................:   616
+INFO: closed_shell .............................................:   25
+INFO: colour_rgb ...............................................:   716
+INFO: conical_surface ..........................................:   295
+INFO: cylindrical_surface ......................................:   966
+INFO: direction ................................................:   11833
+INFO: edge_curve ...............................................:   10239
+INFO: edge_loop ................................................:   4188
+INFO: face_bound ...............................................:   405
+INFO: face_outer_bound .........................................:   3783
+INFO: fill_area_style ..........................................:   716
+INFO: fill_area_style_colour ...................................:   716
+INFO: geometric_representation_context_and_global_uncertainty_a :   717
+INFO: length_unit_and_si_unit ..................................:   717
+INFO: line .....................................................:   4543
+INFO: manifold_surface_shape_representation ....................:   1
+INFO: mechanical_design_geometric_presentation_representation ..:   716
+INFO: open_shell ...............................................:   1
+INFO: oriented_edge ............................................:   20457
+INFO: plane ....................................................:   1767
+INFO: plane_angle_unit_and_si_unit .............................:   717
+INFO: presentation_layer_assignment ............................:   716
+INFO: presentation_style_assignment ............................:   716
+INFO: product ..................................................:   1
+INFO: product_context ..........................................:   1
+INFO: product_definition .......................................:   1
+INFO: product_definition_context ...............................:   1
+INFO: product_definition_formation_with_specified_source .......:   1
+INFO: product_definition_shape .................................:   1
+INFO: product_related_product_category .........................:   1
+INFO: shape_definition_representation ..........................:   1
+INFO: shell_based_surface_model ................................:   1
+INFO: si_unit_and_solid_angle_unit .............................:   717
+INFO: styled_item ..............................................:   716
+INFO: surface_side_style .......................................:   716
+INFO: surface_style_fill_area ..................................:   716
+INFO: surface_style_usage ......................................:   716
+INFO: uncertainty_measure_with_unit ............................:   717
+INFO: vector ...................................................:   4543
+INFO: vertex_point .............................................:   6722
+INFO:                                                              -------
+INFO: Total                                                         218471
+ERROR: [PSF_Face_step::ReadForeign returned: -1]
+ERROR: [PSF_Face::ReadForeign returned: -1]
+ERROR: [PSF_Face_step::ReadForeign returned: -1]
+ERROR: [PSF_Face::ReadForeign returned: -1]
+ERROR: [PSF_Face_step::ReadForeign returned: -1]
+ERROR: [PSF_Face::ReadForeign returned: -1]
+ERROR: [PSF_Face_step::ReadForeign returned: -1]
+ERROR: [PSF_Face::ReadForeign returned: -1]
+ERROR: [PSF_Face_step::ReadForeign returned: -1]
+ERROR: [PSF_Face::ReadForeign returned: -1]
+ERROR: [PSF_Face_step::ReadForeign returned: -1]
+ERROR: [PSF_Face::ReadForeign returned: -1]
+ERROR: [PSF_Face_step::ReadForeign returned: -1]
+ERROR: [PSF_Face::ReadForeign returned: -1]
+ERROR: [PSF_Face_step::ReadForeign returned: -1]
+ERROR: [PSF_Face::ReadForeign returned: -1]
+ERROR: [PSF_Face_step::ReadForeign returned: -1]
+ERROR: [PSF_Face::ReadForeign returned: -1]
+ERROR: [PSF_Face_step::ReadForeign returned: -1]
+ERROR: [PSF_Face::ReadForeign returned: -1]
+ERROR: [PSF_Face_step::ReadForeign returned: -1]
+ERROR: [PSF_Face::ReadForeign returned: -1]
+ERROR: [PSF_Face_step::ReadForeign returned: -1]
+ERROR: [PSF_Face::ReadForeign returned: -1]
+ERROR: [PSF_Face_step::ReadForeign returned: -1]
+ERROR: [PSF_Face::ReadForeign returned: -1]
+ERROR: [PSF_Face_step::ReadForeign returned: -1]
+ERROR: [PSF_Face::ReadForeign returned: -1]
