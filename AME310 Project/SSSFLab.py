@@ -5,6 +5,12 @@ import tkinter as tk
 from tkinter import ttk
 import math
 
+
+mainMenu = True
+gameMode = 0
+# 1 = free-play, 2 = mission mode, 3 = comparison mode
+
+
 # Gas properties: R (J/kg K), cp (J/kg K)
 gases = {
     "Air": (287.0, 1005.0),
@@ -541,6 +547,42 @@ canvas = tk.Canvas(
     highlightbackground="gray"
 )
 canvas.pack(pady=20)
+
+
+def freeplayon():
+    global gameMode, mainMenu
+    gameMode = 1
+    mainMenu = False
+    menuOverlay.place_forget()
+def missionon():
+    global gameMode, mainMenu
+    gameMode = 2
+    mainMenu = False
+    menuOverlay.place_forget()
+def comparisonon():
+    global gameMode, mainMenu
+    gameMode = 3
+    mainMenu = False
+    menuOverlay.place_forget()
+
+
+    
+if mainMenu:
+    menuOverlay = tk.Frame(root, bg="white")
+    #  place(relwidth=1, relheight=1) to stretch across 100% of parent width and height
+    menuOverlay.place(relx=0, rely=0, relwidth=1, relheight=1.0)
+    #  a message or widget on top of the overlay
+    lbl = tk.Label(menuOverlay, text="Alan Zhang's Steady State Steady Flow Systems", fg="black", bg="white", font=("Arial", 18, "bold"))
+    lbl.pack(pady = 200)
+
+    freePlayButton = tk.Button(menuOverlay, text="Free Play", padx=20, pady=10, command=freeplayon)
+    freePlayButton.pack()
+    missionButton = tk.Button(menuOverlay, text="Mission Mode", padx=20, pady=10, command=missionon)
+    missionButton.pack()
+    comparisonPlayButton = tk.Button(menuOverlay, text="Comparison Mode", padx=20, pady=10, command=comparisonon)
+    comparisonPlayButton.pack()
+
+
 
 calculate()
 root.after(16, update_particles)
