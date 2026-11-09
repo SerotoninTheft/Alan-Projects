@@ -6,6 +6,8 @@ from tkinter import ttk
 import math
 
 
+temperatureError = False
+
 mainMenu = True
 gameMode = 0
 # 1 = free-play, 2 = mission mode, 3 = comparison mode
@@ -96,18 +98,32 @@ def calculate(value=None):
 
     if discriminant < 0:
         result.config(
-            text="No physical positive-temperature solution."
+            text="Invalid conditions: No real outlet temperature solution."
         )
-        draw_cone(A1, A2, V1, 0, q)
+
+        flow_state["V1"] = 0
+        flow_state["V2"] = 0
+
+        canvas.delete("particle")
+        particles.clear()
+        canvas.delete("cone")
+
         return
 
     T2 = (-2*c) / (b + math.sqrt(discriminant))
 
     if T2 <= 0:
         result.config(
-            text="No physical positive-temperature solution."
+            text="Invalid conditions: Outlet temperature below absolute zero."
         )
-        draw_cone(A1, A2, V1, 0, q)
+
+        flow_state["V1"] = 0
+        flow_state["V2"] = 0
+
+        canvas.delete("particle")
+        particles.clear()
+        canvas.delete("cone")
+
         return
 
     rho2 = P2 / (R * T2)
@@ -613,5 +629,7 @@ if mainMenu:
 
 
 calculate()
+if temperatureError:
+    print('probelm!')
 root.after(16, update_particles)
 root.mainloop()
