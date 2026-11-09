@@ -1,3 +1,5 @@
+import random
+import time
 
 import tkinter as tk
 from tkinter import ttk
@@ -76,6 +78,13 @@ def calculate(value=None):
         f"Total Heat Rate: {mdot*q/1000:.2f} kW"
     ))
 
+    flow_state.update({
+        "A1": A1,
+        "A2": A2,
+        "V1": V1,
+        "V2": V2
+    })
+
     draw_cone(A1, A2, V1, V2, q, T1, T2)
 
 
@@ -92,10 +101,114 @@ def temp_to_color(temp):
     return f"#{red:02x}{green:02x}{blue:02x}"
 
 
+# Particle animation settings
+particles = []
+particle_limit = 180
+spawn_rate = 2.5
+spawn_accumulator = 0
+last_frame = time.perf_counter()
+
+# Current flow conditions
+flow_state = {
+    "A1": 0.1,
+    "A2": 0.05,
+    "V1": 20,
+    "V2": 80
+}
+
+def visual_speed(v):
+    # Nonlinear compression of real velocity
+    # Keeps slow flow visible and fast flow manageable
+    return 35 + 35 * math.log1p(max(0, v))
+
+
+def update_particles():
+    global last_frame, spawn_accumulator
+
+    now = time.perf_counter()
+    dt = min(now - last_frame, 0.05)
+    last_frame = now
+
+    A1 = flow_state["A1"]
+    A2 = flow_state["A2"]
+    V1 = flow_state["V1"]
+    V2 = flow_state["V2"]
+
+    x1, x2 = 100, 520
+    cy = 260
+
+    r1 = max(12, math.sqrt(A1 / math.pi) * 180)
+    r2 = max(12, math.sqrt(A2 / math.pi) * 180)
+
+    # Spawn particles continuously
+    if V1 > 0:
+        spawn_accumulator += spawn_rate * dt * 30
+
+    while spawn_accumulator >= 1 and len(particles) < particle_limit:
+        offset = random.uniform(-0.95, 0.95)
+
+        particle_id = canvas.create_oval(
+            0, 0, 0, 0,
+            fill="black",
+            outline="",
+            tags="particle"
+        )
+
+        particles.append({
+            "id": particle_id,
+            "x": x1,
+            "offset": offset
+        })
+
+        spawn_accumulator -= 1
+
+    # Move existing particles
+    for p in particles[:]:
+        fraction = (p["x"] - x1) / (x2 - x1)
+        fraction = max(0, min(1, fraction))
+
+        # Smooth velocity interpolation
+        smooth = fraction * fraction * (3 - 2 * fraction)
+        velocity = V1 + (V2 - V1) * smooth
+
+        # Nonlinear visual speed
+        speed = visual_speed(velocity)
+
+        p["x"] += speed * dt
+
+        fraction = (p["x"] - x1) / (x2 - x1)
+
+        if fraction >= 1:
+            canvas.delete(p["id"])
+            particles.remove(p)
+            continue
+
+        # Cone radius at current x
+        radius = r1 + (r2 - r1) * fraction
+
+        # Keep particle within cone
+        y = cy + p["offset"] * radius
+
+        size = 2.5
+
+        canvas.coords(
+            p["id"],
+            p["x"] - size,
+            y - size,
+            p["x"] + size,
+            y + size
+        )
+
+    # Keep particles above the gradient
+    canvas.tag_raise("particle")
+
+    canvas.after(16, update_particles)
+
+
 
 def draw_cone(A1, A2, V1, V2, q, T1, T2):
-    canvas.delete("all")
-
+    canvas.delete("cone")
+    
     width = 620
     cy = 260
     x1 = 100
@@ -145,7 +258,8 @@ def draw_cone(A1, A2, V1, V2, q, T1, T2):
             xb+1, cy+rb,
             xa, cy+ra,
             fill=color,
-            outline=color
+            outline=color,
+            tags="cone"
         )
 
     # Cone outline
@@ -156,29 +270,23 @@ def draw_cone(A1, A2, V1, V2, q, T1, T2):
         x1, cy+r1,
         fill="",
         outline="black",
-        width=2
+        width=2,
+        tags="cone"
     )
 
     # Opening outlines
     canvas.create_line(
         x1, cy-r1, x1, cy+r1,
-        fill="black", width=3
+        fill="black", width=3,
+        tags="cone"
     )
 
     canvas.create_line(
         x2, cy-r2, x2, cy+r2,
-        fill="black", width=3
+        fill="black", width=3,
+        tags="cone"
     )
 
-
-    # Flow arrow
-    canvas.create_line(
-        x1+30, cy,
-        x2+60, cy,
-        arrow=tk.LAST,
-        fill="#e76f51",
-        width=4
-    )
 
     # Inlet label
     canvas.create_text(
@@ -190,7 +298,9 @@ def draw_cone(A1, A2, V1, V2, q, T1, T2):
             f"V = {V1:.1f} m/s"
         ),
         font=("Arial", 11),
-        justify="center"
+        justify="center",
+        tags="cone"
+
     )
 
     # Outlet label
@@ -203,7 +313,9 @@ def draw_cone(A1, A2, V1, V2, q, T1, T2):
             f"V = {V2:.1f} m/s"
         ),
         font=("Arial", 11),
-        justify="center"
+        justify="center",
+        tags="cone"
+
     )
 
     # Heat transfer indication
@@ -224,7 +336,8 @@ def draw_cone(A1, A2, V1, V2, q, T1, T2):
         310, 60,
         text=heat_text,
         font=("Arial", 14, "bold"),
-        fill=heat_color
+        fill=heat_color,
+        tags="cone"
     )
 
     if heat_arrow:
@@ -233,13 +346,15 @@ def draw_cone(A1, A2, V1, V2, q, T1, T2):
             310, 170,
             arrow=heat_arrow,
             fill=heat_color,
-            width=4
+            width=4,
+            tags="cone"
         )
 
     canvas.create_text(
         310, 480,
         text="Single Stream Steady Flow System",
-        font=("Arial", 14, "bold")
+        font=("Arial", 14, "bold"),
+        tags="cone"
     )
 
 
@@ -411,4 +526,5 @@ canvas = tk.Canvas(
 canvas.pack(pady=20)
 
 calculate()
+root.after(16, update_particles)
 root.mainloop()
