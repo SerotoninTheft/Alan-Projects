@@ -27,6 +27,30 @@ k_B = 1.380649e-23
 # Molecules represented by one animated dot
 MOLECULES_PER_DOT = 1e25
 
+def randomize_inputs():
+    sliders = [
+        temp_slider,
+        pressure_slider,
+        speed_slider,
+        area_slider,
+        out_pressure_slider,
+        out_area_slider,
+        heat_slider
+    ]
+
+    for slider in sliders:
+        minimum = float(slider.cget("from"))
+        maximum = float(slider.cget("to"))
+        resolution = float(slider.cget("resolution"))
+
+        steps = round((maximum - minimum) / resolution)
+        value = minimum + random.randint(0, steps) * resolution
+
+        slider.set(value)
+
+    gas_choice.set(random.choice(list(gases.keys())))
+    calculate()
+
 
 
 def calculate(value=None):
@@ -143,7 +167,7 @@ flow_state = {
 def visual_speed(v):
     # Nonlinear compression of real velocity
     # Keeps slow flow visible and fast flow manageable
-    return 35 + 35 * math.log1p(max(0, v))
+    return 35 +v
 
 
 def update_particles():
@@ -169,6 +193,8 @@ def update_particles():
 
     while spawn_accumulator >= 1 and len(particles) < particle_limit:
         offset = random.uniform(-0.95, 0.95)
+        xoffset = random.uniform(-10, 10)
+
         
         particle_id = canvas.create_oval(
             0, 0, 0, 0,
@@ -179,7 +205,7 @@ def update_particles():
 
         particles.append({
             "id": particle_id,
-            "x": x1,
+            "x": x1+xoffset,
             "offset": offset
         })
 
@@ -194,7 +220,7 @@ def update_particles():
         smooth = fraction * fraction * (3 - 2 * fraction)
         velocity = V1 + (V2 - V1) * smooth
 
-        # Nonlinear visual speed
+        # visual speed
         speed = visual_speed(velocity)
 
         p["x"] += speed * dt
@@ -297,18 +323,6 @@ def draw_cone(A1, A2, V1, V2, q, T1, T2):
         tags="cone"
     )
 
-    # Opening outlines
-    canvas.create_line(
-        x1, cy-r1, x1, cy+r1,
-        fill="black", width=3,
-        tags="cone"
-    )
-
-    canvas.create_line(
-        x2, cy-r2, x2, cy+r2,
-        fill="black", width=3,
-        tags="cone"
-    )
 
 
     # Inlet label
@@ -445,7 +459,18 @@ tk.Label(
     left_frame,
     text="STEADY FLOW CONTROLS",
     font=("Arial", 15, "bold")
-).pack(pady=10)
+).pack(pady=5)
+
+
+
+randomize_button = tk.Button(
+    left_frame,
+    text="Randomize Inputs", padx=20, pady=10,
+    command=randomize_inputs
+)
+randomize_button.pack(pady=15)
+
+
 
 tk.Label(left_frame, text="Select Gas").pack()
 
@@ -531,6 +556,9 @@ result = tk.Label(
     justify="left"
 )
 result.pack(pady=5)
+
+
+
 
 tk.Label(
     right_frame,
