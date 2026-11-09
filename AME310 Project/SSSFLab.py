@@ -15,6 +15,14 @@ gases = {
     "Carbon Dioxide": (188.9, 844.0)
 }
 
+
+k_B = 1.380649e-23
+
+# Molecules represented by one animated dot
+MOLECULES_PER_DOT = 1e25
+
+
+
 def calculate(value=None):
     R, cp = gases[gas_choice.get()]
 
@@ -34,6 +42,15 @@ def calculate(value=None):
     # Inlet density and mass flow
     rho1 = P1 / (R * T1)
     mdot = rho1 * A1 * V1
+
+    # Molecular number density (molecules/m³)
+    n1 = P1 / (k_B * T1)
+
+    # Number of molecules entering per second
+    molecules_per_second = n1 * A1 * V1
+
+    # Convert molecular flow into visible dots per second
+    dots_per_second = molecules_per_second / MOLECULES_PER_DOT
 
     # Continuity and energy equation:
     # V2 = mdot * R * T2 / (P2 * A2)
@@ -65,7 +82,7 @@ def calculate(value=None):
 
     rho2 = P2 / (R * T2)
     V2 = mdot / (rho2 * A2)
-
+    n2 = P2 / (k_B * T2)
 
     result.config(text=(
         f"Gas: {gas_choice.get()}\n"
@@ -82,7 +99,8 @@ def calculate(value=None):
         "A1": A1,
         "A2": A2,
         "V1": V1,
-        "V2": V2
+        "V2": V2,
+        "dots_per_second": dots_per_second
     })
 
     draw_cone(A1, A2, V1, V2, q, T1, T2)
@@ -103,7 +121,7 @@ def temp_to_color(temp):
 
 # Particle animation settings
 particles = []
-particle_limit = 180
+particle_limit = 5000
 spawn_rate = 2.5
 spawn_accumulator = 0
 last_frame = time.perf_counter()
@@ -140,16 +158,15 @@ def update_particles():
     r1 = max(12, math.sqrt(A1 / math.pi) * 180)
     r2 = max(12, math.sqrt(A2 / math.pi) * 180)
 
-    # Spawn particles continuously
-    if V1 > 0:
-        spawn_accumulator += spawn_rate * dt * 30
+    # Spawn rate proportional to molecular flow
+    spawn_accumulator += flow_state["dots_per_second"] * dt
 
     while spawn_accumulator >= 1 and len(particles) < particle_limit:
         offset = random.uniform(-0.95, 0.95)
-
+        
         particle_id = canvas.create_oval(
             0, 0, 0, 0,
-            fill="black",
+            fill="white",
             outline="",
             tags="particle"
         )
