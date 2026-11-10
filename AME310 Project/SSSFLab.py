@@ -654,7 +654,7 @@ right_frame.pack(
     side="right",
     fill="both",
     expand=True,
-    padx=15,
+    padx=20,
     pady=10
 )
 
