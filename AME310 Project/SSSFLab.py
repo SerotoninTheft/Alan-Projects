@@ -6,7 +6,9 @@ from tkinter import ttk
 import math
 
 
-temperatureError = False
+# GUI color palette
+BG_COLOR = "#DDDDDD"       # Main background
+TEXT_COLOR = "#222222"     # All text
 
 mainMenu = True
 gameMode = 0
@@ -22,7 +24,19 @@ gases = {
     "Helium": (2077.0, 5193.0),
     "Carbon Dioxide": (188.9, 844.0)
 }
+# Approximate reference properties:
+# critical temperature (K), critical pressure (kPa),
+# triple-point temperature (K), triple-point pressure (kPa),
+# normal boiling point (K), normal melting point (K)
 
+gas_reference = {
+    "Air": (132.5, 3786, 59.8, 5.3, 78.8, 59.0),
+    "Nitrogen": (126.2, 3396, 63.15, 12.5, 77.36, 63.15),
+    "Oxygen": (154.6, 5043, 54.36, 0.146, 90.19, 54.36),
+    "Hydrogen": (33.15, 1296, 13.8, 7.04, 20.28, 14.0),
+    "Helium": (5.20, 227, 2.18, 5.0, 4.22, None),
+    "Carbon Dioxide": (304.13, 7377, 216.59, 517.95, 194.65, 216.59)
+}
 
 k_B = 1.380649e-23
 
@@ -54,6 +68,151 @@ def randomize_inputs():
     calculate()
 
 
+def show_error(message):
+    canvas.delete("cone")
+    canvas.delete("particle")
+    canvas.delete("error")
+
+    particles.clear()
+
+    canvas.create_text(
+        310, 260,
+        text=message,
+        fill="red",
+        font=("Arial", 16, "bold"),
+        justify="center",
+        width=500,
+        tags="error"
+    )
+
+def update_warnings(warnings):
+    if not warnings:
+        warning_label.config(
+            text="✓ No realism warnings detected.",
+            fg="green"
+        )
+        return
+
+    message = "\n\n".join(
+        f"⚠ {warning}" for warning in warnings
+    )
+
+    warning_label.config(
+        text=message,
+        fg="#b45309"
+    )
+
+def check_realism(gas, T1, P1, V1, T2, P2, V2, A1, A2):
+    warnings = []
+
+    R, cp = gases[gas]
+    Tc, Pc, Tt, Pt, Tb, Tm = gas_reference[gas]
+
+    # 1. Phase-change screening
+    for name, T, P in [("Inlet", T1, P1), ("Outlet", T2, P2)]:
+        if T <= 0:
+            warnings.append(f"{name}: Invalid absolute temperature.")
+            continue
+
+        # Approximate saturation curve for pure gases
+        if gas == "Air":
+            if T < 90:
+                warnings.append(
+                    f"{name}: Air may partially condense or freeze. "
+                    "Mixture phase behavior is not modeled."
+                )
+
+        elif gas == "Helium":
+            if T < Tc and P < Pc:
+                warnings.append(
+                    f"{name}: Helium may be in a liquid-vapor region. "
+                    "A helium-specific phase model is needed."
+                )
+
+        elif T < Tt:
+            warnings.append(
+                f"{name}: Temperature is below the triple point. "
+                "Solid formation or sublimation may be relevant."
+            )
+
+        elif T < Tc:
+            # Estimate saturation pressure using a fitted
+            # Clausius-Clapeyron relation between triple
+            # and critical reference points.
+            slope = (
+                math.log(Pc / Pt) /
+                (1 / Tt - 1 / Tc)
+            )
+
+            Psat = Pt * math.exp(
+                slope * (1 / Tt - 1 / T)
+            )
+
+            if P > Psat:
+                warnings.append(
+                    f"{name}: Possible condensation. "
+                    f"P = {P/1000:.1f} kPa, "
+                    f"estimated Psat = {Psat/1000:.1f} kPa."
+                )
+
+    # 2. Mach number
+    gamma = cp / (cp - R)
+
+    a1 = math.sqrt(gamma * R * T1)
+    a2 = math.sqrt(gamma * R * T2)
+
+    M1 = abs(V1) / a1
+    M2 = abs(V2) / a2
+
+    for name, M in [("Inlet", M1), ("Outlet", M2)]:
+        if M >= 1:
+            warnings.append(
+                f"{name}: Sonic/supersonic flow "
+                f"(Mach {M:.2f}). Choking may occur."
+            )
+        elif M >= 0.8:
+            warnings.append(
+                f"{name}: High subsonic flow "
+                f"(Mach {M:.2f}). Compressibility is important."
+            )
+
+    # 3. Ideal-gas approximation
+    for name, T, P in [("Inlet", T1, P1), ("Outlet", T2, P2)]:
+        Tr = T / Tc
+        Pr = P / (Pc * 1000)
+
+        if Tr < 1.2 and Pr > 0.1:
+            warnings.append(
+                f"{name}: Near critical conditions "
+                f"(Tr={Tr:.2f}, Pr={Pr:.2f}). "
+                "Ideal-gas behavior may be inaccurate."
+            )
+        elif Pr > 0.5:
+            warnings.append(
+                f"{name}: Elevated reduced pressure "
+                f"(Pr={Pr:.2f}). Consider real-gas properties."
+            )
+
+    # 4. Diffuser flow separation
+    if A2 > A1:
+        r1 = math.sqrt(A1 / math.pi)
+        r2 = math.sqrt(A2 / math.pi)
+
+        # Assumed physical cone length (meters)
+        cone_length = 1.0
+
+        half_angle = math.degrees(
+            math.atan((r2 - r1) / cone_length)
+        )
+
+        if half_angle > 7:
+            warnings.append(
+                f"Diffuser: Expansion half-angle "
+                f"{half_angle:.1f}°. Flow separation risk "
+                "may be elevated."
+            )
+
+    return warnings
 
 def calculate(value=None):
     R, cp = gases[gas_choice.get()]
@@ -100,6 +259,8 @@ def calculate(value=None):
         result.config(
             text="Invalid conditions: No real outlet temperature solution."
         )
+        
+        show_error("INVALID FLOW CONDITIONS\nNo real outlet temperature solution.")
 
         flow_state["V1"] = 0
         flow_state["V2"] = 0
@@ -107,7 +268,9 @@ def calculate(value=None):
         canvas.delete("particle")
         particles.clear()
         canvas.delete("cone")
-
+        update_warnings([
+            "Cannot evaluate realism: invalid outlet state."
+        ])
         return
 
     T2 = (-2*c) / (b + math.sqrt(discriminant))
@@ -117,18 +280,31 @@ def calculate(value=None):
             text="Invalid conditions: Outlet temperature below absolute zero."
         )
 
+        show_error("INVALID FLOW CONDITIONS\nOutlet temperature below absolute zero.")
+
         flow_state["V1"] = 0
         flow_state["V2"] = 0
 
         canvas.delete("particle")
         particles.clear()
         canvas.delete("cone")
-
+        update_warnings([
+            "Cannot evaluate realism: invalid outlet state."
+        ])
         return
 
     rho2 = P2 / (R * T2)
     V2 = mdot / (rho2 * A2)
     n2 = P2 / (k_B * T2)
+
+    warnings = check_realism(
+        gas_choice.get(),
+        T1, P1, V1,
+        T2, P2, V2,
+        A1, A2
+    )
+
+    update_warnings(warnings)
 
     result.config(text=(
         f"Gas: {gas_choice.get()}\n"
@@ -214,7 +390,7 @@ def update_particles():
         
         particle_id = canvas.create_oval(
             0, 0, 0, 0,
-            fill="white",
+            fill="#DDDDDD",
             outline="",
             tags="particle"
         )
@@ -266,13 +442,15 @@ def update_particles():
 
     # Keep particles above the gradient
     canvas.tag_raise("particle")
-
+    canvas.tag_raise("error")
     canvas.after(16, update_particles)
 
 
 
 def draw_cone(A1, A2, V1, V2, q, T1, T2):
     canvas.delete("cone")
+    canvas.delete("error")
+
     
     width = 620
     cy = 260
@@ -352,6 +530,7 @@ def draw_cone(A1, A2, V1, V2, q, T1, T2):
         ),
         font=("Arial", 11),
         justify="center",
+        fill = TEXT_COLOR,
         tags="cone"
 
     )
@@ -367,6 +546,7 @@ def draw_cone(A1, A2, V1, V2, q, T1, T2):
         ),
         font=("Arial", 11),
         justify="center",
+        fill = TEXT_COLOR,
         tags="cone"
 
     )
@@ -407,6 +587,7 @@ def draw_cone(A1, A2, V1, V2, q, T1, T2):
         310, 480,
         text="Single Stream Steady Flow System",
         font=("Arial", 14, "bold"),
+        fill=TEXT_COLOR,
         tags="cone"
     )
 
@@ -414,6 +595,12 @@ def draw_cone(A1, A2, V1, V2, q, T1, T2):
 # ---------------- GUI ----------------
 
 root = tk.Tk()
+root.configure(bg=BG_COLOR)
+
+root.option_add("*Background", BG_COLOR)
+root.option_add("*Foreground", TEXT_COLOR)
+root.option_add("*highlightBackground", BG_COLOR)
+
 root.title("Steady Flow Simulator")
 root.geometry("1100x850")
 
@@ -582,11 +769,34 @@ tk.Label(
     font=("Arial", 16, "bold")
 ).pack(pady=10)
 
+
+
+# Physical realism warning panel
+warning_frame = tk.LabelFrame(
+    right_frame,
+    text="Physical Realism Warnings",
+    font=("Arial", 12, "bold"),
+    padx=12,
+    pady=10
+)
+warning_frame.pack(fill="x", padx=10, pady=10)
+
+warning_label = tk.Label(
+    warning_frame,
+    text="Checking flow conditions...",
+    font=("Arial", 10),
+    justify="left",
+    anchor="w",
+    wraplength=550
+)
+warning_label.pack(fill="x")
+
+
 canvas = tk.Canvas(
     right_frame,
     width=620,
     height=550,
-    bg="white",
+    bg=BG_COLOR,
     highlightthickness=1,
     highlightbackground="gray"
 )
@@ -612,11 +822,11 @@ def comparisonon():
 
     
 if mainMenu:
-    menuOverlay = tk.Frame(root, bg="white")
+    menuOverlay = tk.Frame(root, bg=BG_COLOR)
     #  place(relwidth=1, relheight=1) to stretch across 100% of parent width and height
     menuOverlay.place(relx=0, rely=0, relwidth=1, relheight=1.0)
     #  a message or widget on top of the overlay
-    lbl = tk.Label(menuOverlay, text="Alan Zhang's Steady State Steady Flow Systems", fg="black", bg="white", font=("Arial", 18, "bold"))
+    lbl = tk.Label(menuOverlay, text="Alan Zhang's Steady State Steady Flow Systems", fg=TEXT_COLOR, bg=BG_COLOR, font=("Arial", 18, "bold"))
     lbl.pack(pady = 200)
 
     freePlayButton = tk.Button(menuOverlay, text="Free Play", padx=20, pady=10, command=freeplayon)
@@ -629,7 +839,5 @@ if mainMenu:
 
 
 calculate()
-if temperatureError:
-    print('probelm!')
 root.after(16, update_particles)
 root.mainloop()
