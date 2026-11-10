@@ -76,7 +76,7 @@ def show_error(message):
     particles.clear()
 
     canvas.create_text(
-        310, 260,
+        310, 220,
         text=message,
         fill="red",
         font=("Arial", 16, "bold"),
@@ -375,7 +375,7 @@ def update_particles():
     V2 = flow_state["V2"]
 
     x1, x2 = 100, 520
-    cy = 260
+    cy = 200
 
     r1 = max(12, math.sqrt(A1 / math.pi) * 180)
     r2 = max(12, math.sqrt(A2 / math.pi) * 180)
@@ -453,7 +453,7 @@ def draw_cone(A1, A2, V1, V2, q, T1, T2):
 
     
     width = 620
-    cy = 260
+    cy = 200
     x1 = 100
     x2 = 520
 
@@ -566,7 +566,7 @@ def draw_cone(A1, A2, V1, V2, q, T1, T2):
         heat_arrow = None
 
     canvas.create_text(
-        310, 60,
+        310, 30,
         text=heat_text,
         font=("Arial", 14, "bold"),
         fill=heat_color,
@@ -575,8 +575,8 @@ def draw_cone(A1, A2, V1, V2, q, T1, T2):
 
     if heat_arrow:
         canvas.create_line(
-            310, 90,
-            310, 170,
+            310, 60,
+            310, 120,
             arrow=heat_arrow,
             fill=heat_color,
             width=4,
@@ -584,7 +584,7 @@ def draw_cone(A1, A2, V1, V2, q, T1, T2):
         )
 
     canvas.create_text(
-        310, 480,
+        310, 400,
         text="Single Stream Steady Flow System",
         font=("Arial", 14, "bold"),
         fill=TEXT_COLOR,
@@ -795,7 +795,7 @@ warning_label.pack(fill="x")
 canvas = tk.Canvas(
     right_frame,
     width=620,
-    height=550,
+    height=440,
     bg=BG_COLOR,
     highlightthickness=1,
     highlightbackground="gray"
@@ -826,7 +826,7 @@ if mainMenu:
     #  place(relwidth=1, relheight=1) to stretch across 100% of parent width and height
     menuOverlay.place(relx=0, rely=0, relwidth=1, relheight=1.0)
     #  a message or widget on top of the overlay
-    lbl = tk.Label(menuOverlay, text="Alan's Spectacular Steady State Steady Flow Systems", fg=TEXT_COLOR, bg=BG_COLOR, font=("Arial", 18, "bold"))
+    lbl = tk.Label(menuOverlay, text="Alan's Spectacular Steady\nState Steady Flow Systems", fg=TEXT_COLOR, bg=BG_COLOR, font=("Arial", 50, "bold"))
     lbl.pack(pady = 200)
 
     freePlayButton = tk.Button(menuOverlay, text="Free Play", padx=20, pady=10, command=freeplayon)
