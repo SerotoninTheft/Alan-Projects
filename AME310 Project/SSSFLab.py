@@ -826,7 +826,7 @@ if mainMenu:
     #  place(relwidth=1, relheight=1) to stretch across 100% of parent width and height
     menuOverlay.place(relx=0, rely=0, relwidth=1, relheight=1.0)
     #  a message or widget on top of the overlay
-    lbl = tk.Label(menuOverlay, text="Alan Zhang's Steady State Steady Flow Systems", fg=TEXT_COLOR, bg=BG_COLOR, font=("Arial", 18, "bold"))
+    lbl = tk.Label(menuOverlay, text="Alan's Spectacular Steady State Steady Flow Systems", fg=TEXT_COLOR, bg=BG_COLOR, font=("Arial", 18, "bold"))
     lbl.pack(pady = 200)
 
     freePlayButton = tk.Button(menuOverlay, text="Free Play", padx=20, pady=10, command=freeplayon)
