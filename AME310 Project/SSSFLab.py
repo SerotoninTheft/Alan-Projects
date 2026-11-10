@@ -10,9 +10,24 @@ import math
 BG_COLOR = "#DDDDDD"       # Main background
 TEXT_COLOR = "#222222"     # All text
 
+
+
+
 mainMenu = True
 gameMode = 0
 # 1 = free-play, 2 = mission mode, 3 = comparison mode
+
+
+
+
+score = 0
+current_mission = None
+mission_complete = False
+
+MISSION_TEMP_TOL = 5       # °C
+MISSION_VELOCITY_TOL = 5  # m/s
+MISSION_INPUT_TOL = 5.0
+MISSION_AREA_TOL = 0.05  # ±0.01 m²
 
 
 # Gas properties: R (J/kg K), cp (J/kg K)
@@ -68,6 +83,85 @@ def randomize_inputs():
     calculate()
 
 
+def display_mission():
+    if current_mission is None:
+        return
+
+    m = current_mission
+    tolerance = MISSION_INPUT_TOL
+
+    if m["fixed_name"] in ("Inlet area", "Outlet area"):
+        tolerance = MISSION_AREA_TOL
+    mission_label.config(
+        text=(
+            f"Gas: {m['gas']}\n"
+            f"Reach outlet temperature: "
+            f"{m['temperature']:.1f} °C "
+            f"(±{MISSION_TEMP_TOL:g} °C)\n"
+            f"Reach outlet velocity: "
+            f"{m['velocity']:.1f} m/s "
+            f"(±{MISSION_VELOCITY_TOL:g} m/s)\n"
+            f"Keep {m['fixed_name']} at "
+            f"{m['fixed_value']:.2f} "
+            f"(±{tolerance:g})\n\n"
+            f"Move input sliders to achieve the requirements without warnings to score!"
+        )
+    )
+
+    score_label.config(text=f"Score: {score}")
+
+def check_mission(T2, V2, warnings):
+    global score
+
+    if gameMode != 2 or current_mission is None:
+        return
+
+    if warnings:
+        return
+
+    m = current_mission
+
+    correct_gas = gas_choice.get() == m["gas"]
+
+    correct_temp = (
+        abs((T2 - 273.15) - m["temperature"])
+        <= MISSION_TEMP_TOL
+    )
+
+    correct_velocity = (
+        abs(V2 - m["velocity"])
+        <= MISSION_VELOCITY_TOL
+    )
+    
+    slider = mission_sliders[m["fixed_name"]]
+    resolution = float(slider.cget("resolution"))
+
+    tolerance = MISSION_INPUT_TOL
+
+    if m["fixed_name"] in ("Inlet area", "Outlet area"):
+        tolerance = MISSION_AREA_TOL
+
+    correct_fixed = (
+        abs(slider.get() - m["fixed_value"])
+        <= max(tolerance, resolution / 2)
+    )
+
+    if not all((
+        correct_gas,
+        correct_temp,
+        correct_velocity,
+        correct_fixed
+    )):
+        return
+    score += 1
+
+    mission_status.config(
+        text=f"🎉 Mission complete! Score: {score}"
+    )
+
+    generate_mission()
+
+
 def show_error(message):
     canvas.delete("cone")
     canvas.delete("particle")
@@ -101,6 +195,141 @@ def update_warnings(warnings):
         text=message,
         fg="#b45309"
     )
+
+
+def generate_mission():
+    global current_mission
+
+    sliders = {
+        "T1": temp_slider,
+        "P1": pressure_slider,
+        "V1": speed_slider,
+        "A1": area_slider,
+        "P2": out_pressure_slider,
+        "A2": out_area_slider,
+        "q": heat_slider
+    }
+
+    for attempt in range(2000):
+        gas = random.choice(list(gases))
+        values = {
+            key: random_slider_value(slider)
+            for key, slider in sliders.items()
+        }
+
+        state = mission_physics(
+            gas,
+            values["T1"], values["P1"],
+            values["V1"], values["A1"],
+            values["P2"], values["A2"],
+            values["q"]
+        )
+
+        if state is None:
+            continue
+
+        T1, P1, V1, T2, P2, V2, A1, A2 = state
+        if V2 > 120:
+            continue
+        if check_realism(gas, T1, P1, V1, T2, P2, V2, A1, A2):
+            continue
+
+        # Avoid generating a mission already solved by current settings.
+        current_T2 = None
+        if gas_choice.get() == gas:
+            current_state = mission_physics(
+                gas,
+                temp_slider.get(),
+                pressure_slider.get(),
+                speed_slider.get(),
+                area_slider.get(),
+                out_pressure_slider.get(),
+                out_area_slider.get(),
+                heat_slider.get()
+            )
+            if current_state is not None:
+                current_T2 = current_state[3] - 273.15
+
+        if current_T2 is not None:
+            same_temp = abs(current_T2 - (T2 - 273.15)) <= MISSION_TEMP_TOL
+            same_velocity = abs(
+                current_state[5] - V2
+            ) <= MISSION_VELOCITY_TOL
+
+            if same_temp and same_velocity:
+                continue
+
+        fixed_name = random.choice(list(mission_sliders))
+        fixed_slider = mission_sliders[fixed_name]
+
+        fixed_key = next(
+            key for key, slider in sliders.items()
+            if slider is fixed_slider
+        )
+
+        current_mission = {
+            "gas": gas,
+            "temperature": T2 - 273.15,
+            "velocity": V2,
+            "fixed_name": fixed_name,
+            "fixed_key": fixed_key,
+            "fixed_value": values[fixed_key],
+            "solution": values
+        }
+
+        display_mission()
+        return
+
+    current_mission = None
+    mission_label.config(
+        text="Could not generate a warning-free mission.\nTry expanding the slider ranges."
+    )
+
+def mission_physics(gas, T1_C, P1_kPa, V1, A1, P2_kPa, A2, q_kJ):
+    R, cp = gases[gas]
+
+    T1 = T1_C + 273.15
+    P1 = P1_kPa * 1000
+    P2 = P2_kPa * 1000
+    q = q_kJ * 1000
+
+    if min(T1, P1, P2, A1, A2) <= 0 or V1 <= 0:
+        return None
+
+    rho1 = P1 / (R * T1)
+    mdot = rho1 * A1 * V1
+
+    k = mdot * R / (P2 * A2)
+    a = 0.5 * k**2
+    b = cp
+    c = -cp*T1 - 0.5*V1**2 - q
+
+    discriminant = b*b - 4*a*c
+
+    if discriminant < 0:
+        return None
+
+    T2 = (-2*c) / (b + math.sqrt(discriminant))
+
+    if T2 <= 0:
+        return None
+
+    rho2 = P2 / (R*T2)
+    V2 = mdot / (rho2*A2)
+
+    return T1, P1, V1, T2, P2, V2, A1, A2
+
+
+def random_slider_value(slider):
+    minimum = float(slider.cget("from"))
+    maximum = float(slider.cget("to"))
+    step = float(slider.cget("resolution"))
+
+    steps = int((maximum - minimum) / step)
+    return round(minimum + random.randint(0, steps) * step, 6)
+
+
+
 
 def check_realism(gas, T1, P1, V1, T2, P2, V2, A1, A2):
     warnings = []
@@ -305,7 +534,8 @@ def calculate(value=None):
     )
 
     update_warnings(warnings)
-
+    if gameMode == 2:
+        check_mission(T2, V2, warnings)
     result.config(text=(
         f"Gas: {gas_choice.get()}\n"
         f"Mass Flow: {mdot:.3f} kg/s\n"
@@ -771,6 +1001,16 @@ tk.Label(
 
 
 
+mission_sliders = {
+    "Inlet temperature": temp_slider,
+    "Inlet pressure": pressure_slider,
+    "Inlet speed": speed_slider,
+    "Inlet area": area_slider,
+    "Outlet area": out_area_slider,
+    "Heat input": heat_slider
+}
+
+
 # Physical realism warning panel
 warning_frame = tk.LabelFrame(
     right_frame,
@@ -803,6 +1043,46 @@ canvas = tk.Canvas(
 canvas.pack(pady=20)
 
 
+mission_frame = tk.LabelFrame(
+    right_frame,
+    text="Mission Mode",
+    bg=BG_COLOR,
+    fg=TEXT_COLOR,
+    font=("Arial", 12, "bold"),
+    padx=12,
+    pady=10
+)
+
+score_label = tk.Label(
+    mission_frame,
+    text="Score: 0",
+    bg=BG_COLOR,
+    fg=TEXT_COLOR,
+    font=("Arial", 13, "bold")
+)
+score_label.pack(anchor="w")
+
+mission_label = tk.Label(
+    mission_frame,
+    text="",
+    bg=BG_COLOR,
+    fg=TEXT_COLOR,
+    font=("Arial", 11),
+    justify="left",
+    wraplength=500
+)
+mission_label.pack(anchor="w", pady=8)
+
+mission_status = tk.Label(
+    mission_frame,
+    text="",
+    bg=BG_COLOR,
+    fg="green",
+    font=("Arial", 11, "bold")
+)
+mission_status.pack(anchor="w")
+
+
 def freeplayon():
     global gameMode, mainMenu
     gameMode = 1
@@ -810,7 +1090,12 @@ def freeplayon():
     menuOverlay.place_forget()
 def missionon():
     global gameMode, mainMenu
+
+
     gameMode = 2
+    mission_frame.pack(fill="x", padx=10, pady=10)
+    mission_status.config(text="")
+    generate_mission()
     mainMenu = False
     menuOverlay.place_forget()
 def comparisonon():
