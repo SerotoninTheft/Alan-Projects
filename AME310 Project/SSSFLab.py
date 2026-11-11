@@ -78,7 +78,7 @@ def randomize_inputs():
         value = minimum + random.randint(0, steps) * resolution
 
         slider.set(value)
-
+    
     gas_choice.set(random.choice(list(gases.keys())))
     calculate()
 
@@ -589,7 +589,7 @@ flow_state = {
 def visual_speed(v):
     # Nonlinear compression of real velocity
     # Keeps slow flow visible and fast flow manageable
-    return 35 +v
+    return 15 +1.5*v
 
 
 def update_particles():
