@@ -6,11 +6,8 @@ from tkinter import ttk
 import math
 
 
-# GUI color palette
 BG_COLOR = "#DDDDDD"       # Main background
 TEXT_COLOR = "#222222"     # All text
-
-
 
 
 mainMenu = True
@@ -19,18 +16,18 @@ gameMode = 0
 
 
 
-
 score = 0
 current_mission = None
 mission_complete = False
 
-MISSION_TEMP_TOL = 5       # °C
-MISSION_VELOCITY_TOL = 5  # m/s
+# Tolerances for missions
+MISSION_TEMP_TOL = 5 
+MISSION_VELOCITY_TOL = 5 
 MISSION_INPUT_TOL = 5.0
-MISSION_AREA_TOL = 0.05  # ±0.01 m²
+MISSION_AREA_TOL = 0.05 
 
 
-# Gas properties: R (J/kg K), cp (J/kg K)
+# Gas properties
 gases = {
     "Air": (287.0, 1005.0),
     "Nitrogen": (296.8, 1040.0),
@@ -39,11 +36,8 @@ gases = {
     "Helium": (2077.0, 5193.0),
     "Carbon Dioxide": (188.9, 844.0)
 }
-# Approximate reference properties:
-# critical temperature (K), critical pressure (kPa),
-# triple-point temperature (K), triple-point pressure (kPa),
-# normal boiling point (K), normal melting point (K)
 
+# More gas properties
 gas_reference = {
     "Air": (132.5, 3786, 59.8, 5.3, 78.8, 59.0),
     "Nitrogen": (126.2, 3396, 63.15, 12.5, 77.36, 63.15),
@@ -55,7 +49,7 @@ gas_reference = {
 
 k_B = 1.380649e-23
 
-# Molecules represented by one animated dot
+# Molecules represented by one dot
 MOLECULES_PER_DOT = 1e25
 
 def randomize_inputs():
@@ -234,7 +228,7 @@ def generate_mission():
         if check_realism(gas, T1, P1, V1, T2, P2, V2, A1, A2):
             continue
 
-        # Avoid generating a mission already solved by current settings.
+        # Avoid generating a mission already solved by current settings
         current_T2 = None
         if gas_choice.get() == gas:
             current_state = mission_physics(
@@ -330,14 +324,13 @@ def random_slider_value(slider):
 
 
 
-
 def check_realism(gas, T1, P1, V1, T2, P2, V2, A1, A2):
     warnings = []
 
     R, cp = gases[gas]
     Tc, Pc, Tt, Pt, Tb, Tm = gas_reference[gas]
 
-    # 1. Phase-change screening
+    # Phase change screening
     for name, T, P in [("Inlet", T1, P1), ("Outlet", T2, P2)]:
         if T <= 0:
             warnings.append(f"{name}: Invalid absolute temperature.")
@@ -365,9 +358,7 @@ def check_realism(gas, T1, P1, V1, T2, P2, V2, A1, A2):
             )
 
         elif T < Tc:
-            # Estimate saturation pressure using a fitted
-            # Clausius-Clapeyron relation between triple
-            # and critical reference points.
+            # Estimate saturation pressure using a fitted Clausius-Clapeyron relation between triple and critical reference points
             slope = (
                 math.log(Pc / Pt) /
                 (1 / Tt - 1 / Tc)
@@ -384,7 +375,7 @@ def check_realism(gas, T1, P1, V1, T2, P2, V2, A1, A2):
                     f"estimated Psat = {Psat/1000:.1f} kPa."
                 )
 
-    # 2. Mach number
+    # Mach number
     gamma = cp / (cp - R)
 
     a1 = math.sqrt(gamma * R * T1)
@@ -405,7 +396,7 @@ def check_realism(gas, T1, P1, V1, T2, P2, V2, A1, A2):
                 f"(Mach {M:.2f}). Compressibility is important."
             )
 
-    # 3. Ideal-gas approximation
+    # Ideal-gas approximation
     for name, T, P in [("Inlet", T1, P1), ("Outlet", T2, P2)]:
         Tr = T / Tc
         Pr = P / (Pc * 1000)
@@ -422,12 +413,12 @@ def check_realism(gas, T1, P1, V1, T2, P2, V2, A1, A2):
                 f"(Pr={Pr:.2f}). Consider real-gas properties."
             )
 
-    # 4. Diffuser flow separation
+    # Diffuser flow separation
     if A2 > A1:
         r1 = math.sqrt(A1 / math.pi)
         r2 = math.sqrt(A2 / math.pi)
 
-        # Assumed physical cone length (meters)
+        # cone length (meters)
         cone_length = 1.0
 
         half_angle = math.degrees(
@@ -456,7 +447,7 @@ def calculate(value=None):
     P2 = out_pressure_slider.get() * 1000
     A2 = out_area_slider.get()
 
-    # Heat added or removed (kJ/kg)
+    # Heat added or removed
     q = heat_slider.get() * 1000
 
     # Inlet density and mass flow
@@ -561,7 +552,6 @@ def calculate(value=None):
 
 def temp_to_color(temp):
     # Temperature in Celsius
-    # Blue at 0°C, purple at 250°C, red at 500°C
     t = max(0, min(1, temp / 500))
 
     red = int(255 * t)
@@ -587,8 +577,6 @@ flow_state = {
 }
 
 def visual_speed(v):
-    # Nonlinear compression of real velocity
-    # Keeps slow flow visible and fast flow manageable
     return 15 +1.5*v
 
 
@@ -638,11 +626,9 @@ def update_particles():
         fraction = (p["x"] - x1) / (x2 - x1)
         fraction = max(0, min(1, fraction))
 
-        # Smooth velocity interpolation
         smooth = fraction * fraction * (3 - 2 * fraction)
         velocity = V1 + (V2 - V1) * smooth
 
-        # visual speed
         speed = visual_speed(velocity)
 
         p["x"] += speed * dt
@@ -654,10 +640,9 @@ def update_particles():
             particles.remove(p)
             continue
 
-        # Cone radius at current x
         radius = r1 + (r2 - r1) * fraction
 
-        # Keep particle within cone
+        # Keep particles within cone
         y = cy + p["offset"] * radius
 
         size = 2.5
@@ -822,7 +807,7 @@ def draw_cone(A1, A2, V1, V2, q, T1, T2):
     )
 
 
-# ---------------- GUI ----------------
+# GUI
 
 root = tk.Tk()
 root.configure(bg=BG_COLOR)
@@ -835,7 +820,7 @@ root.title("Steady Flow Simulator")
 root.geometry("1100x850")
 
 # Left panel
-# Scrollable left panel
+
 left_container = tk.Frame(root, width=440)
 left_container.pack(side="left", fill="y", padx=10, pady=10)
 left_container.pack_propagate(False)
@@ -852,7 +837,6 @@ scroll_canvas.configure(yscrollcommand=scrollbar.set)
 scrollbar.pack(side="right", fill="y")
 scroll_canvas.pack(side="left", fill="both", expand=True)
 
-# All existing sliders go inside this frame
 left_frame = tk.Frame(scroll_canvas)
 
 window_id = scroll_canvas.create_window(
@@ -874,8 +858,6 @@ def resize_content(event):
 
 left_frame.bind("<Configure>", update_scroll_region)
 scroll_canvas.bind("<Configure>", resize_content)
-
-
 
 
 # Right panel
@@ -1110,7 +1092,6 @@ if mainMenu:
     menuOverlay = tk.Frame(root, bg=BG_COLOR)
     #  place(relwidth=1, relheight=1) to stretch across 100% of parent width and height
     menuOverlay.place(relx=0, rely=0, relwidth=1, relheight=1.0)
-    #  a message or widget on top of the overlay
     lbl = tk.Label(menuOverlay, text="Alan's Spectacular Steady\nState Steady Flow Systems", fg=TEXT_COLOR, bg=BG_COLOR, font=("Arial", 50, "bold"))
     lbl.pack(pady = 200)
 
