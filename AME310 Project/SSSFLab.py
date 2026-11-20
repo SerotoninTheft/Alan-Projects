@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinter import ttk
 import math
 
-
+  
 BG_COLOR = "#DDDDDD"       # Main background
 TEXT_COLOR = "#222222"     # All text
 
